@@ -1,54 +1,22 @@
-
 import unittest
-import pytest
+from unittest.mock import patch
+
+import claim
 import ClaimRepository
 
-class ChallengeTwoTests(unittest.TestCase):
 
-    def test_adding_items_to_list(self):
-        # Arrange
-        self.claimID = "1"
-        self.claimType = "car"
-        self.description = "Engine failure."
-        self.claimAmount = "150.75"
-        self.dateOfIncident = "1/01/18"
-        self.dateOfClaim = "1/02/18"
-        self.isValid = True
+class ClaimsTests(unittest.TestCase):
+    def setUp(self):
+        ClaimRepository.claim_list.clear()
+        for number in ('1', '2'):
+            ClaimRepository.enter_claims_list(number, 'car', 'Repair', '150.75', '1/1/18', '1/2/18', True)
 
-        # Act 
-        ClaimRepository.enter_claims_list(self.claimID, self.claimType, self.description, self.claimAmount, self.dateOfIncident, self.dateOfClaim, self.isValid)
-        actual = len(ClaimRepository.claim_list)
-        expected = 1
+    def test_confirm_removes_only_oldest_claim(self):
+        with patch('builtins.input', side_effect=['2', 'y', '4']), patch('builtins.print'):
+            claim.main()
+        self.assertEqual([entry.claimID for entry in ClaimRepository.claim_list], ['2'])
 
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_justifying_queue_cycle(self):
-        # Arrange
-        self.isValid = True
-
-        # Act
-        ClaimRepository.justify_claims(self.isValid)
-        actual = len(ClaimRepository.claim_list)
-        expected = 1
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_calling_all_list_items(self):
-        # Arrange
-        self.claimID = "1"
-        self.claimType = "car"
-        self.description = "Engine failure."
-        self.claimAmount = "150.75"
-        self.dateOfIncident = "1/01/18"
-        self.dateOfClaim = "1/02/18"
-        self.isValid = True
-
-        # Act
-        ClaimRepository.list_all_claims(self.claimID, self.claimType, self.description, self.claimAmount, self.dateOfIncident, self.dateOfClaim, self.isValid)
-        actual = len(ClaimRepository.claim_list)
-        expected = 1
-
-        # Assert
-        self.assertEqual(expected, actual)
+    def test_cancel_preserves_queue(self):
+        with patch('builtins.input', side_effect=['2', 'n', '4']), patch('builtins.print'):
+            claim.main()
+        self.assertEqual([entry.claimID for entry in ClaimRepository.claim_list], ['1', '2'])

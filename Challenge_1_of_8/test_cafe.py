@@ -1,63 +1,22 @@
 import unittest
+from unittest.mock import patch
+
+import cafe
 import menu_repository
-import pytest
-
-'''
-It is NOT testing cafe, despite the name
-It is testing the menu_repository
-'''
 
 
-class TestsMenu(unittest.TestCase):
+class CafeTests(unittest.TestCase):
+    def setUp(self):
+        menu_repository.menu_items.clear()
 
-    def test_add_menu_item_function(self):
-        # Arrange
-        self.meal_num = 1
-        self.item_name = "food"
-        self.item_description = "yum"
-        self.item_ingredients = "meat"
-        self.price = 1
-        # Act
-        menu_repository.add_item_to_menu(self.meal_num, self.item_name, self.item_description, self.item_ingredients, self.price)
-        actual = len(menu_repository.menu_items)
-        expected = 1
-        # Assert
-        self.assertEqual(expected, actual)
+    def test_add_read_delete(self):
+        menu_repository.add_item_to_menu('1', 'Soup', 'Lunch', 'Beans', '4.50')
+        self.assertEqual(menu_repository.order_item_from_menu('1')[0].item_name, 'Soup')
+        self.assertTrue(menu_repository.delete_item_from_menu('1'))
+        self.assertEqual(menu_repository.menu_items, [])
 
-    def test_ordering_items_from_the_menu(self):
-        # Arrange
-        self.meal_num = 1
-
-        # Act
-        menu_repository.order_item_from_menu(self.meal_num)
-        actual = len(menu_repository.menu_items)
-        expected = 1
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_listing_all_items(self):
-        # Arrange
-        self.item_name = "food"
-
-        # Act
-        menu_repository.list_menu_all_items(self.item_name)
-        actual = len(menu_repository.menu_items)
-        expected = 1
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_deleting_meal_from_the_menu(self):
-        # Arrange
-        self.meal_num = 1
-        self.item_name = "food"
-        self.item_description = "yum"
-        self.item_ingredients = "meat"
-        self.price = 1
-
-
-        # Act
-        menu_repository.add_item_to_menu(self.meal_num, self.item_name, self.item_description, self.item_ingredients, self.price)
-        menu_repository.delete_item_from_menu
-        self.assertTrue(menu_repository.delete_item_from_menu(self.meal_num))
+    def test_lookup_uses_selected_order(self):
+        menu_repository.add_item_to_menu('1', 'Soup', 'Lunch', 'Beans', '4.50')
+        with patch('builtins.input', side_effect=['2', '1', '5']), patch('builtins.print') as output:
+            cafe.main()
+        self.assertIn('#1 is a Soup: $4.50', str(output.call_args_list))
